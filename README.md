@@ -67,6 +67,7 @@ For installing dependencies in efs we need to open terminal and create new direc
 
 and to copy the embeddings file to the models folder in EFS we use below command in (***model_training.ipynb***):
 
+
       !sudo cp ./embeddings.sav ./efs/efs/models/embeddings.sav
 
 Next a keyphrase extraction (Named Entity Recognition) model training process starts. Here it takes certain parameters like location from where to import data and location to save the output model, as well we provide the number of times the model should go through the complete training data (***Epochs***) it updates model weight after each epoch. To train this model a different GPU instance is started. GPU is used as it is a deep learning model.
@@ -98,3 +99,47 @@ Next we download the model from the s3 bucket check if the model accuracy is gre
 
 	!sudo cp -r bert-clinical-ner ./efs/efs/models/
 Once all the process is done we close the jupyter notebook instance.
+
+**Lambda Function:**
+Lambda function is triggered to performs the prediction job.
+Lambda function needs to have below  settings:
+
+	Name :pythonml
+	Role : pythonml-role-pprl7ztu 
+	Runtime : python 3.7
+
+Resource base policy :
+
+	Add permissions:
+	Statement Id: python-mllambda-1
+	Principal: arn:aws:iam::012959706571:user/PankajTamhane	
+	Actions : lambda:InvokeFunction
+
+Environment variables:
+
+	Key: PYTHONPATH      Value:/mnt/efs/lib
+
+VPC:
+
+	Name : vpc-e59f389e (172.30.0.0/16) | Main Dev NAT
+	Subnet : subnet-70bee72d (172.30.128.0/18) | us-east-1a, Main Dev NAT Private .128.0
+	Security Group : sg-60d71316 (Lambda Main Dev NAT)
+
+File System :
+
+	File system Id : fs-095543dfe911e19ee 
+	File system ARN :arn:aws:elasticfilesystem:us-east-1:012959706571:file-system/fs-095543dfe911e19ee
+	
+	Access point id :fsap-041630d041056d952 
+	Access point ARN : arn:aws:elasticfilesystem:us-east-1:012959706571:access-point/fsap-041630d041056d952
+S3 Trigger:
+
+	Lambda>>Add Trigger
+	Bucket : predictive-billing
+	Prefix: medical/transcribe-jobs
+	Suffix: .json
+
+EFS is attached to the lambda function. We have the trained model artifacts in the EFS. We also copy the python dependencies in the EFS so that lambda obtains the dependencies from EFS. We use EFS to save on time required to download the model every time lambda is triggered. And it also provides quick model loading 
+We load the embeddings file and NER model
+First we extract the key phrases and run all the keyphrases through embedding and find the CPT code for each keyphrase.
+Once all the CPT for phrases are identified the data is sent to the DI backend which then stores the data in the database and the mapped CPT data is available on UI
