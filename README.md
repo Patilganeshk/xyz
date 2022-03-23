@@ -30,7 +30,7 @@ dependencies installed using lifecycle script:
 
 After installing dependencies and setting up the enviroment variables it'll start execution of model training script(***model_training.ipynb***).
 
-Data preprocessing happens in the Notebook. We convert the JSON data in the format which is accepted by the Model. A train and test dataset is created and saved to the S3 bucket(***dev-predictive-billing***).
+Data preprocessing happens in the Notebook. We convert the JSON data in the format which is accepted by the Model. A train and test dataset is created and saved to the S3 bucket.
 
 An embedding file(***embeddings.sav***) is created using a pre-trained deep learning model(***SentenceTransformer('./efs/efs/models/bioclinicalbert')***) which was earlier trained on the medical and clinical data.  We leverage the knowledge of this model to create embedding. The time required to create embeddings is dependent on the number of data samples present since we create embeddings from scratch every time the process is initiated  and the time also depends on the type of instance we spinoff. If we use the GPU instance for jupyter notebook the embedding process is a bit quicker than the CPU instance.
 
@@ -93,7 +93,7 @@ The following are hyperparameters passed:
                  'overwrite_output_dir': True,
                  'save_strategy': "no"
 
-The model training script downloads the data from S3 bucket(***dev-predictive-billing***), trains the model and saves the model in S3 bucket. For every model train run we save the model to S3 bucket.  This GPU instance is automatically terminated once the training job is completed. The model training time largely depends on the amount of data and number of epochs. For  the key extraction model to train properly at least 1000 samples to be provided.
+The model training script downloads the data from S3 bucket, trains the model and saves the model in S3 bucket. For every model train run we save the model to S3 bucket.  This GPU instance is automatically terminated once the training job is completed. The model training time largely depends on the amount of data and number of epochs. For  the key extraction model to train properly at least 1000 samples to be provided.
 
 Next we download the model from the s3 bucket check if the model accuracy is greater than 50% and more than that of previously trained model, if the accuracy is more than two conditions we copy the model to EFS.
 
@@ -112,7 +112,6 @@ Resource base policy :
 
 	Add permissions:
 	Statement Id: python-mllambda-1
-	Principal: arn:aws:iam::012959706571:user/PankajTamhane	
 	Actions : lambda:InvokeFunction
 
 Environment variables:
@@ -121,21 +120,12 @@ Environment variables:
 
 VPC:
 
-	Name : vpc-e59f389e (172.30.0.0/16) | Main Dev NAT
-	Subnet : subnet-70bee72d (172.30.128.0/18) | us-east-1a, Main Dev NAT Private .128.0
-	Security Group : sg-60d71316 (Lambda Main Dev NAT)
+Make sure that security group and vpc is same as efs That allows NFS access from Notebook instance security group
 
-File System :
-
-	File system Id : fs-095543dfe911e19ee 
-	File system ARN :arn:aws:elasticfilesystem:us-east-1:012959706571:file-system/fs-095543dfe911e19ee
-	
-	Access point id :fsap-041630d041056d952 
-	Access point ARN : arn:aws:elasticfilesystem:us-east-1:012959706571:access-point/fsap-041630d041056d952
 S3 Trigger:
 
 	Lambda>>Add Trigger
-	Bucket : predictive-billing
+	Bucket : BUCKET_NAME
 	Prefix: medical/transcribe-jobs
 	Suffix: .json
 
