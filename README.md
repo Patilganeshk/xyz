@@ -56,8 +56,16 @@ To mount efs in notebook instance (***predictive-billing-ai***) we use below com
           ./efs
 
       !sudo chmod go+rw ./efs
-      
-and to copy the embeddings file to the models folder in EFS we use:
+For installing dependencies in efs we need to open terminal and create new directory in efs(./efs/efs/lib) and use requirements.txt for versions :
+
+       	cd efs
+		mkdir efs
+		cd efs
+		mkdir lib
+		cd ../..
+		pip install –target=/home/ec2-user/SageMaker/predictive-ai/efs/efs/lib -r requirements.txt
+
+and to copy the embeddings file to the models folder in EFS we use below command in (***model_training.ipynb***):
 
       !sudo cp ./embeddings.sav ./efs/efs/models/embeddings.sav
 
@@ -86,6 +94,7 @@ The following are hyperparameters passed:
 
 The model training script downloads the data from S3 bucket(***dev-predictive-billing***), trains the model and saves the model in S3 bucket. For every model train run we save the model to S3 bucket.  This GPU instance is automatically terminated once the training job is completed. The model training time largely depends on the amount of data and number of epochs. For  the key extraction model to train properly at least 1000 samples to be provided.
 
-Next we download the model from the s3 bucket check if the model accuracy is greater than 50% and more than that of previously trained model, if the accuracy is more than two conditions we copy the model to EFS
-Model accuracy depend upon the quality if label and quantity of the data
+Next we download the model from the s3 bucket check if the model accuracy is greater than 50% and more than that of previously trained model, if the accuracy is more than two conditions we copy the model to EFS.
+
+	!sudo cp -r bert-clinical-ner ./efs/efs/models/
 Once all the process is done we close the jupyter notebook instance.
