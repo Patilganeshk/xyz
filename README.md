@@ -51,10 +51,10 @@ This is setup that we need to train the model. Once the data is uploaded to S3 b
 ## Prediction:
 1. create another lambda function to perform the prediction job.
 2. make sure lambda function has lambda execution and sagemaker trigger role 
-3. In resource base policy add permission fro InvokeFunction
+3. In resource base policy add permission for InvokeFunction
 4. create enviroment variables like  PYTHONPATH  (Value:Value:/mnt/efs/lib) APIPATH(Value : Api path)
 5. make sure you select the same vpc and security group as efs
-6. Add S3 trigger with bucket and file path of training json
+6. Add S3 trigger with bucket and file path of transcription json
 7. copy the script for prediction job from ***lambda.py*** from git repository.
 
 Once a transcription json is uploaded to s3 bucket a Lambda function is triggered and performs the prediction job.EFS is attached to the lambda function. We have the trained model artifacts in the EFS. We also copy the python dependencies in the EFS so that lambda obtains the dependencies from EFS. We use EFS to save on time required to download the model every time lambda is triggered. And it also provides quick model loading. We load the embeddings file and NER model.First we extract the key phrases and run all the keyphrases through embedding and find the CPT code for each keyphrase.Once all the CPT for phrases are identified the data is sent to the DI backend which then stores the data in the database and the mapped CPT data is available on UI.
